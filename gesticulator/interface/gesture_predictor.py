@@ -62,6 +62,9 @@ class GesturePredictor:
         """
         text_type = self._get_text_input_type(text)
         audio, text = self._extract_features(audio_path, text, text_type)
+        
+        # By default, Gesticulator consumes about 1,5s of the input for context
+        # Therefore we pad the inputs with silence in order to keep the entire length
         audio, text = self._add_feature_padding(audio, text)
         # Add batch dimension
         audio, text = audio.unsqueeze(0), text.unsqueeze(0)
@@ -160,6 +163,7 @@ class GesturePredictor:
         text_features = self._extract_text_features(text_in, text_type, audio_features.shape[0])
         # Align the vector lengths
         audio_features, text_features = self._align_vector_lengths(audio_features, text_features)
+        
         audio = self._tensor_from_numpy(audio_features)
         text = self._tensor_from_numpy(text_features)
 
@@ -226,8 +230,6 @@ class GesturePredictor:
             print('ERROR: Unknown embedding: ', self.embedding)
             exit(-1)
                 
-        return text_features
-
     def _estimate_word_timings_bert(self, text, total_duration_frames):
         """
         This is a convenience functions that enables the model to work with plaintext 
