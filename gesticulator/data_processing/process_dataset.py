@@ -45,12 +45,12 @@ def _encode_vectors(audio_filename, gesture_filename, text_filename, embedding_m
 
     if mode == 'test':
         seq_length = 0
-    elif mode == 'train':
+    elif mode == 'train' or mode == "train_mirrored":
         seq_length = args.seq_len
     elif mode == 'dev':
         seq_length = 5 * args.seq_len
     else:
-        print(f"ERROR: Unknown dataset type '{mode}'! Possible values: 'train', 'dev' and 'test'.")
+        print(f"ERROR: Unknown dataset type '{mode}'! Possible values: 'train', 'train_mirrored', 'dev' and 'test'.")
         exit(-1)
 
     # Step 1: Vectorizing speech, with features of 'n_inputs' dimension, time steps of 0.01s
@@ -182,6 +182,15 @@ def create_dataset(dataset_name, embedding_model, args, save_in_separate_files):
         save_dir = args.proc_data_dir
 
         _save_dataset(data_csv, save_dir, embedding_model, dataset_name, args)
+        
+        # If the motion mirroring augmentation is enabled, then
+        # we should save those as well
+        if dataset_name == "train" and args.use_mirror_augment:
+            print("Using mirroring augmentation!")
+            csv_path = path.join(args.proc_data_dir, f"train_mirrored-dataset-info.csv")
+            data_csv = pd.read_csv(csv_path)
+            _save_dataset(data_csv, save_dir, embedding_model, "train_mirrored", args)
+
 
 def _save_data_as_sequences(data_csv, save_dir, embedding_model, dataset_name, args):
     """Save the datapoints in 'data_csv' as separate files to 'save_dir'."""    

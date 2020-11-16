@@ -56,6 +56,8 @@ def create_logger(model_save_dir):
 def add_training_script_arguments(parser):
     parser.add_argument('--save_model_every_n_epochs', '-ckpt_freq', type=int, default=0,
                         help="The frequency of model checkpoint saving.")
+    parser.add_argument('--use_mirror_augment', '-mirror', action='store_true',
+                        help="If set, use auxiliary mirrored motion dataset")
     return parser
 
 if __name__ == '__main__':

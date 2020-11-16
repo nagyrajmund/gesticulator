@@ -15,7 +15,7 @@ torch.set_default_tensor_type('torch.FloatTensor')
 class SpeechGestureDataset(Dataset):
     """Trinity Speech-Gesture Dataset class."""
 
-    def __init__(self, root_dir, apply_PCA=False, train=True):
+    def __init__(self, root_dir, apply_PCA=False, train=True, use_mirror_augment=False):
         """
         Args:
             root_dir (string): Directory with the datasat.
@@ -28,8 +28,14 @@ class SpeechGestureDataset(Dataset):
             # apply PCA
             if apply_PCA:
                 self.gesture = np.load(path.join(root_dir, 'PCA', 'Y_train.npy')).astype(np.float32)
+                if use_mirror_augment:
+                    print("[WARNING] the 'use_mirror_augment' parameter is ignored because 'apply_PCA' is set to true!")
             else:
                 self.gesture = np.load(path.join(root_dir, 'Y_train.npy')).astype(np.float32)
+                
+                if use_mirror_augment:
+                    gesture_mirrored = np.load(path.join(root_dir, 'Y_train_mirrored.npy')).astype(np.float32)
+                    self.gesture = np.append(self.gesture, gesture_mirrored)
         else:
             self.audio = np.load(path.join(root_dir, 'X_dev.npy')).astype(np.float32)
             self.text = np.load(path.join(root_dir, 'T_dev.npy')).astype(np.float32)
@@ -45,14 +51,19 @@ class SpeechGestureDataset(Dataset):
 
         self.audio_dim = self[0]['audio'].shape[-1]
 
+
     def __len__(self):
-        return len(self.audio)
+        # NOTE: it's important to take the length of the gestures and not the speech
+        #       because the gestures might be twice the length if mirroring is used
+        return len(self.gesture)
 
 
     def __getitem__(self, idx):
-        audio = self.audio[idx]
+        # if mirroring is used, 'idx' can go up to twice the length of audio/text
+        # instead of storing them twice, we can take the modulo
+        audio = self.audio[idx % len(self.audio)]
+        text = self.text[idx % len(self.text)]
         gesture = self.gesture[idx]
-        text = self.text[idx]
 
         sample = {'audio': audio, 'output': gesture, 'text': text}
 

@@ -63,6 +63,7 @@ class GesticulatorModel(pl.LightningModule, PredictionSavingMixin):
             inference_mode:  if True, then construct the model without loading the datasets into memory (used for loading saved models)
         """
         super().__init__()
+        # store args in self.hparams
         self.save_hyperparameters(args)
 
         if not inference_mode:
@@ -88,7 +89,7 @@ class GesticulatorModel(pl.LightningModule, PredictionSavingMixin):
 
     def load_datasets(self):
         try:
-            self.train_dataset = SpeechGestureDataset(self.hparams.data_dir, self.hparams.use_pca, train=True)
+            self.train_dataset = SpeechGestureDataset(self.hparams.data_dir, self.hparams.use_pca, train=True, self.hparams.use_mirror_augment)
             self.val_dataset   = SpeechGestureDataset(self.hparams.data_dir, self.hparams.use_pca, train=False)
             self.val_sequence  = ValidationDataset(self.hparams.data_dir, self.hparams.past_context, self.hparams.future_context)
         except FileNotFoundError as err:

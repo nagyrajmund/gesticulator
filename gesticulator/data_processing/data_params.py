@@ -16,6 +16,8 @@ dataset_argparser.add_argument('--raw_data_dir', '-data_raw', default="../../dat
                 help='Path to the folder with the raw dataset')
 dataset_argparser.add_argument('--proc_data_dir', '-data_proc', default="../../dataset/processed/",
                 help='Path to the folder with the processed dataset')
+dataset_argparser.add_argument('--use_mirror_augment', '-mirror', action='store_true',
+                help='If set, augment the dataset with all the motion mirrored along the x-axis')
 
 # -------------------------------------------------------------------------------------------------
 
