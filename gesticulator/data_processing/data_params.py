@@ -38,8 +38,7 @@ processing_argparser.add_argument('--future_context', '-f_cont', default=20, typ
 
 # Features
 processing_argparser.add_argument('--text_embedding', '-embed', default="BERT",
-                    help='The text embedding method to use (can be "BERT" or "FastText"),'
-                         ' but FastText is currently disabled')
+                    help='The text embedding method to use (can be "BERT" or "FastText"')
 
 processing_argparser.add_argument('--feature_type', '-feat', default="Spectro",
                     help="""Describes the type of the input features 
