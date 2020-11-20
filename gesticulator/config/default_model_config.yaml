@@ -42,6 +42,7 @@ prediction_save_formats: ["video", "3d_coordinates", "raw_gesture"] # Can be "bv
 # ---- Binary flags ---- 
 use_pca: False
 use_recurrent_speech_enc: False
+use_mirror_augment: False
 no_overwrite_warning: False
 # If 'no_overwrite_warning' is set, and the given <run_name> directory
 # already exists, it will be cleared without displaying any warnings

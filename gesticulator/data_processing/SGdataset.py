@@ -11,7 +11,6 @@ from sklearn.decomposition import PCA
 
 torch.set_default_tensor_type('torch.FloatTensor')
 
-
 class SpeechGestureDataset(Dataset):
     """Trinity Speech-Gesture Dataset class."""
 
@@ -35,7 +34,7 @@ class SpeechGestureDataset(Dataset):
                 
                 if use_mirror_augment:
                     gesture_mirrored = np.load(path.join(root_dir, 'Y_train_mirrored.npy')).astype(np.float32)
-                    self.gesture = np.append(self.gesture, gesture_mirrored)
+                    self.gesture = np.concatenate((self.gesture, gesture_mirrored), axis=0)
         else:
             self.audio = np.load(path.join(root_dir, 'X_dev.npy')).astype(np.float32)
             self.text = np.load(path.join(root_dir, 'T_dev.npy')).astype(np.float32)
