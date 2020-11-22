@@ -453,8 +453,6 @@ class GesticulatorModel(pl.LightningModule, PredictionSavingMixin):
             self.last_saved_train_prediction_epoch = self.current_epoch
             self.generate_training_predictions()
 
-        return {} # The trainer expects a dictionary
-        
     def validation_step(self, batch, batch_nb):
         speech = batch["audio"]
         text = batch["text"]
