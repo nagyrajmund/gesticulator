@@ -50,7 +50,8 @@ def construct_model_config_parser(add_trainer_args = True):
     parser.add('--saved_models_dir', '-model_d',  default=None,
                help='Path to the directory where models will be saved '
                     '(default: <results>/<run_name>/models/')
-
+    parser.add('--utils_dir', default="./utils/", 
+               help="The directory where the mean pose will be saved")
     # Data processing parameters
     parser.add('--sequence_length', '-seq_l',  default=40, type=int,
                help='Length of each training sequence')

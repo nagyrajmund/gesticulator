@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 from config.model_config import construct_model_config_parser
 from gesticulator.model.model import GesticulatorModel
 from pytorch_lightning import Trainer
-from pytorch_lightning.logging import TensorBoardLogger
+from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks.base import Callback
 
 from visualization.motion_visualizer.generate_videos import generate_videos
@@ -38,7 +38,7 @@ def main(hparams):
     callbacks = [ModelSavingCallback()] if hparams.save_model_every_n_epochs > 0 else []
     
     trainer = Trainer.from_argparse_args(hparams, logger=logger, callbacks = callbacks,
-        checkpoint_callback=False, early_stop_callback=False)
+        checkpoint_callback=False)
 
     trainer.fit(model)
     trainer.save_checkpoint(os.path.join(model.save_dir, "trained_model.ckpt"))

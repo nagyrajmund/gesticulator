@@ -200,10 +200,11 @@ class GesticulatorModel(pl.LightningModule, PredictionSavingMixin):
 
     def calculate_mean_pose(self):
         self.hparams.mean_pose = np.mean(self.val_dataset.gesture, axis=(0, 1))
-        np.save("./utils/mean_pose.npy", self.hparams.mean_pose)
+
+        np.save(path.join(self.hparams.utils_dir, "mean_pose.npy"), self.hparams.mean_pose)
 
     def load_mean_pose(self):
-        self.hparams.mean_pose = np.load("./utils/mean_pose.npy")
+        self.hparams.mean_pose = np.load(path.join(self.hparams.utils_dir, "mean_pose.npy"))
 
     def initialize_rnn_hid_state(self):
         """Initialize the hidden state for the RNN."""
@@ -438,16 +439,12 @@ class GesticulatorModel(pl.LightningModule, PredictionSavingMixin):
         loss_val = loss.unsqueeze(0)
         mse_loss_val = mse_loss.unsqueeze(0)
         vel_loss_val = vel_loss.unsqueeze(0)
+        
+        self.log("train/full_loss", loss_val, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log("train/mse_loss", mse_loss_val, on_step=True, on_epoch=True, logger=True)
+        self.log("train/cont_loss", vel_loss_val, on_step=True, on_epoch=True, logger=True)
 
-        tqdm_dict = {"train/full_loss": loss_val,
-                      "train/mse_loss": mse_loss_val,
-                      "train/cont_loss": vel_loss_val}
-
-        output = OrderedDict({
-            'loss': loss,
-            'log': tqdm_dict})
-
-        return output
+        return loss
 
     def training_epoch_end(self, outputs):
         elapsed_epochs = self.current_epoch - self.last_saved_train_prediction_epoch 
@@ -472,9 +469,9 @@ class GesticulatorModel(pl.LightningModule, PredictionSavingMixin):
 
         val_loss = self.val_loss(predicted_gesture, true_gesture)
 
-        logger_logs = {'validation_loss': val_loss}
+        self.log("val_loss", val_loss, on_epoch=True, prog_bar=True, logger=True)
 
-        return {'val_loss': val_loss, 'val_example':predicted_gesture, 'log': logger_logs}
+        return {'val_loss': val_loss, 'val_example':predicted_gesture}
  
     def validation_epoch_end(self, outputs):
         """
@@ -489,11 +486,8 @@ class GesticulatorModel(pl.LightningModule, PredictionSavingMixin):
             self.last_saved_val_prediction_epoch = self.current_epoch
             self.generate_validation_predictions()
 
-
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        tqdm_dict = {'avg_val_loss': avg_loss}
-
-        return {'avg_val_loss': avg_loss, "log": tqdm_dict}
+        self.log('avg_val_loss', avg_loss)
 
     def generate_evaluation_videos(self, semantic, random):
         """
