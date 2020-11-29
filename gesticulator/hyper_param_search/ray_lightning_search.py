@@ -23,11 +23,17 @@ def train_model(hparams, num_epochs, num_gpus):
         gpus=num_gpus,
         logger=TensorBoardLogger(
             save_dir=model.hparams.result_dir, name="", version="."),
-            #progress_bar_refresh_rate=1,
-            callbacks=[TuneReportCallback(
+            progress_bar_refresh_rate=10,
+            callbacks=[
+            # TuneReportCallback(
+            #     {
+            #         "loss": "train/full_loss"
+            #     }, on="epoch_end"
+            # )]
+            TuneReportCallback(
                 {
-                    "loss": "train/full_loss"
-                }, on="epoch_end"
+                    "val_loss": "avg_val_loss"
+                }, on="validation_end"
             )]
         )
     trainer.fit(model)
@@ -36,22 +42,22 @@ def tune_hparam_search(hparams, num_samples, num_epochs, gpus_per_trial):
     # List of tuned hyperparams
     config = \
     {
-        "batch_size": tune.choice([32, 64, 128, 256]),
+        "batch_size": tune.choice([64, 128]),
         "vel_coef": tune.sample_from(
-            lambda spec: 0.1 ** (np.random.randint(3, 10))),
+            lambda spec: 0.1 * (np.random.randint(3, 10))),
         "learning_rate": tune.sample_from(
             lambda _: 10 ** (- np.random.randint(3, 6))),
         "dropout": tune.sample_from(
-            lambda _: np.random.randint(30) / 100),
+            lambda _: np.random.randint(10, 31) / 100),
         "dropout_multiplier": tune.choice([1, 2, 3]),
         "speech_enc_frame_dim": tune.sample_from(
             lambda _: np.random.randint(2, 15) * 10),
         "full_speech_enc_dim": tune.sample_from(
             lambda _: np.random.randint(3, 9) * 124),
         "n_layers": tune.randint(1, 4),
-        "first_l_sz": tune.choice([128, 256, 384, 512]),
+        "first_l_sz": tune.choice([256, 384, 512]),
         "second_l_sz": tune.choice([128, 256, 384, 512]),
-        "third_l_sz": tune.choice([128, 256, 384, 512]),
+        "third_l_sz": tune.choice([128, 256, 384]),
         "n_prev_poses": tune.sample_from(
             lambda _: np.random.randint(1,4)),
     }
@@ -75,16 +81,16 @@ def tune_hparam_search(hparams, num_samples, num_epochs, gpus_per_trial):
         ),        
         config=hparams,
         resources_per_trial={
-            "cpu": 1,
+            "cpu": 2,
             "gpu": gpus_per_trial
         },
-        metric="loss",
+        metric="val_loss",
         mode="min",
         num_samples=num_samples,
         scheduler=scheduler,
         progress_reporter=reporter,
-        name="gesticulator_hparam_search",
-        local_dir=path.join(hparams["save_dir"], hparams["run_name"])
+        name="gesticulator_hparam_search_val_loss2",
+        local_dir=path.join(hparams["result_dir"])
     )
     
     print("Best hyperparameters found were: ", analysis.best_config)
@@ -99,11 +105,11 @@ if __name__ == '__main__':
     hyperparams = parser.parse_args()
     # convert to dictionary
     hyperparams = vars(hyperparams)
-    root_dir = "/home/work/Desktop/repositories/gesticulator/"
+    root_dir = "/home/rajmund/gesticulator/"
     hyperparams["data_dir"] = path.join(root_dir, "dataset/processed")
     hyperparams["result_dir"] = path.join(root_dir, "results")
     hyperparams["utils_dir"] = path.join(root_dir, "gesticulator/utils")
 
     tune_hparam_search(hyperparams, 
-        num_samples=2, num_epochs=1, gpus_per_trial=0)
+        num_samples=50, num_epochs=12, gpus_per_trial=1)
 
