@@ -124,11 +124,13 @@ class GesturePredictor:
 
         audio_past = torch.full(
             (self.model.hparams.past_context, audio.shape[1]),
-            fill_value = audio_fill_value)
+            fill_value = audio_fill_value,
+            dtype=torch.long)
 
         audio_future = torch.full(
             (self.model.hparams.future_context, audio.shape[1]),
-            fill_value = audio_fill_value)
+            fill_value = audio_fill_value,
+            dtype=torch.long)
         
         audio = torch.cat((audio_past, audio, audio_future), axis=0)
 
