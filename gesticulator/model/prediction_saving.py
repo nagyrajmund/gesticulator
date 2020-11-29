@@ -81,17 +81,19 @@ class PredictionSavingMixin(ABC):
 
     def generate_validation_predictions(self):
         """Predict gestures for the validation input and save the results."""
-        predicted_gestures = self.forward(
-            audio = self.val_input['audio'],
-            text = self.val_input['text'],
-            use_conditioning=True, 
-            motion=None).cpu().detach().numpy()
+        for idx, val_input in enumerate(self.val_inputs):
+            
+            predicted_gestures = self.forward(
+                audio = val_input['audio'],
+                text = val_input['text'],
+                use_conditioning=True, 
+                motion=None).cpu().detach().numpy()
 
-        if self.hparams.use_pca:
-            pca = load('utils/pca_model_12.joblib')
-            predicted_gestures = pca.inverse_transform(predicted_gestures)
-      
-        self.save_prediction(predicted_gestures, "validation")
+            if self.hparams.use_pca:
+                pca = load('utils/pca_model_12.joblib')
+                predicted_gestures = pca.inverse_transform(predicted_gestures)
+        
+            self.save_prediction(predicted_gestures, "validation", filename=f"ep_{self.current_epoch + 1}_video_{idx}")
 
     def generate_test_predictions(self, mode):
         """

@@ -251,9 +251,8 @@ class GesticulatorModel(pl.LightningModule, PredictionSavingMixin):
                 
         # Load the first validation sequence as input
         if "validation" in self.enabled_phases:
-            self.val_input = \
-                self.load_train_or_val_input(self.val_sequence[0])
-       
+            self.val_inputs = [self.load_train_or_val_input(seq) for seq in self.val_sequence]
+                       
                 
     def forward(self, audio, text, use_conditioning, motion, use_teacher_forcing=True):
         """

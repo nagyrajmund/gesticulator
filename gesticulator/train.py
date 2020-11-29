@@ -25,8 +25,8 @@ class ModelSavingCallback(Callback):
         model = GesticulatorModel.load_from_checkpoint(<checkpoint_path>)
     """
     def on_validation_end(self, trainer, model):
-        if trainer.current_epoch % model.hparams.save_model_every_n_epochs == 0:
-            checkpoint_fname = f"model_ep{model.current_epoch}.ckpt"
+        if (trainer.current_epoch + 1) % model.hparams.save_model_every_n_epochs == 0:
+            checkpoint_fname = f"model_ep{model.current_epoch+1}.ckpt"
             checkpoint_dir = os.path.abspath(model.save_dir)
 
             trainer.save_checkpoint(os.path.join(model.save_dir, checkpoint_fname))
@@ -68,5 +68,8 @@ if __name__ == '__main__':
     parser = add_training_script_arguments(parser) 
 
     hyperparams = parser.parse_args()
+    print()
+    print(vars(hyperparams))
+    print()
     main(hyperparams)
 
