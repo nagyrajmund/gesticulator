@@ -17,10 +17,27 @@ import scipy.io.wavfile as wav
 import numpy as np
 import scipy
 
+import opensmile
+import soundfile 
+
 NFFT = 1024
 MFCC_INPUTS=26 # How many features we will store for each MFCC vector
 WINDOW_LENGTH = 0.1 #s
 SUBSAMPL_RATE = 9
+
+def extract_gemaps_features(audio_filename):
+    feature_extractor = opensmile.Smile(
+        feature_set = opensmile.FeatureSet.eGeMAPSv01b)
+
+    audio, sampling_rate = soundfile.read(audio_filename)
+    # use 50 ms windows
+    step = int((len(audio) / sampling_rate) / 0.05)
+    features = [feature_extractor.process_signal(audio[start:start+step], sampling_rate).to_numpy()
+                for start in range(0, len(audio) - step, step)]
+    # remove excess dimension
+    features = np.asarray(features).squeeze()
+    
+    return features
 
 def derivative(x, f):
     """ Calculate numerical derivative (by FDM) of a 1d array

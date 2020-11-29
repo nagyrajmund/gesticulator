@@ -63,6 +63,10 @@ def _encode_vectors(audio_filename, gesture_filename, text_filename, embedding_m
     elif args.feature_type == "Pros":
 
         input_vectors = tools.extract_prosodic_features(audio_filename)
+   
+    elif args.feature_type == "GeMAPS":
+        
+        input_vectors = tools.extract_gemaps_features(audio_filename)
 
     elif args.feature_type == "MFCC+Pros":
 

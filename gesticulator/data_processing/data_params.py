@@ -42,4 +42,4 @@ processing_argparser.add_argument('--text_embedding', '-embed', default="BERT",
 
 processing_argparser.add_argument('--feature_type', '-feat', default="Spectro",
                     help="""Describes the type of the input features 
-                            (can be 'Spectro', 'MFCC', 'Pros', 'MFCC+Pros' or 'Spectro+Pos')""")
+                            (can be 'Spectro', 'MFCC', 'Pros', 'GeMAPS', 'MFCC+Pros' or 'Spectro+Pos')""")
