@@ -19,7 +19,6 @@ import scipy
 
 import opensmile
 import soundfile 
-
 NFFT = 1024
 MFCC_INPUTS=26 # How many features we will store for each MFCC vector
 WINDOW_LENGTH = 0.1 #s
@@ -30,13 +29,19 @@ def extract_gemaps_features(audio_filename):
         feature_set = opensmile.FeatureSet.eGeMAPSv01b)
 
     audio, sampling_rate = soundfile.read(audio_filename)
-    # use 50 ms windows
-    step = int((len(audio) / sampling_rate) / 0.05)
+    
+    # Ideally we would want to use 50 ms windows, but they are too short for opensmile
+    # Therefore we use 100 ms windows instead, then upsample the feature vector to the same length
+    step = int(0.1 * sampling_rate)
     features = [feature_extractor.process_signal(audio[start:start+step], sampling_rate).to_numpy()
                 for start in range(0, len(audio) - step, step)]
     # remove excess dimension
     features = np.asarray(features).squeeze()
     
+    # Upsample so that we have the same length as we would with 50 ms windows
+    cols = np.linspace(0, features.shape[0], endpoint=False, num=features.shape[0]*2, dtype=int)
+    features = features[cols]
+
     return features
 
 def derivative(x, f):
