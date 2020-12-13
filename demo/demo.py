@@ -30,7 +30,7 @@ def main(args):
               data_pipe_dir = '../gesticulator/utils/data_pipe.sav')
 
     # Add the audio to the video
-    command = f"ffmpeg -y -i {args.audio} -i temp.mp4 -c:v libx264 -c:a libvorbis -loglevel quiet -shortest {args.video_out}"
+    command = f"ffmpeg -y -i {args.audio} -i temp.mp4 -c:v libx264 -loglevel quiet -shortest {args.video_out}"
     subprocess.call(command.split())
 
     print("\nGenerated video:", args.video_out)
@@ -70,6 +70,8 @@ def check_feature_type(model_file):
         feature_type = "MFCC"
     elif audio_dim == 30:
         feature_type = "MFCC+Pros"
+    elif audio_dim == 88:
+        feature_type = "GeMAPs"
     else:
         print("Error: Unknown audio feature type of dimension", audio_dim)
         exit(-1)
