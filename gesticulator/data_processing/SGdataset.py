@@ -8,6 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 import random
 
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 
 torch.set_default_tensor_type('torch.FloatTensor')
 
@@ -24,6 +25,7 @@ class SpeechGestureDataset(Dataset):
         if train:
             self.audio = np.load(path.join(root_dir, 'X_train.npy')).astype(np.float32)
             self.text = np.load(path.join(root_dir, 'T_train.npy')).astype(np.float32)
+
             # apply PCA
             if apply_PCA:
                 self.gesture = np.load(path.join(root_dir, 'PCA', 'Y_train.npy')).astype(np.float32)
@@ -105,3 +107,23 @@ class ValidationDataset(Dataset):
         sample = {'audio': audio, 'text': text}
 
         return sample
+
+
+def fit_and_standardize(data):
+    shape = data.shape
+    flat = data.reshape((shape[0]*shape[1], shape[2]))
+    scaler = StandardScaler().fit(flat)
+    scaled = scaler.transform(flat).reshape(shape)
+    return scaled, scaler
+
+def standardize(data, scaler):
+    shape = data.shape
+    flat = data.reshape((shape[0]*shape[1], shape[2]))
+    scaled = scaler.transform(flat).reshape(shape)
+    return scaled
+
+def inv_standardize(data, scaler):      
+    shape = data.shape
+    flat = data.reshape((shape[0]*shape[1], shape[2]))
+    scaled = scaler.inverse_transform(flat).reshape(shape)
+    return scaled     

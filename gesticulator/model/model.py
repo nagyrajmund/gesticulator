@@ -14,7 +14,7 @@ from argparse import ArgumentParser
 import warnings
 
 from shutil import rmtree
-from joblib import load
+from joblib import dump, load
 
 import torch
 import torch.nn as nn
@@ -23,6 +23,7 @@ import pytorch_lightning as pl
 
 from gesticulator.model.prediction_saving import PredictionSavingMixin
 from gesticulator.data_processing.SGdataset import SpeechGestureDataset, ValidationDataset
+from gesticulator.data_processing.SGdataset import fit_and_standardize, standardize, inv_standardize
 
 warnings.filterwarnings("ignore")
 torch.set_default_tensor_type('torch.FloatTensor')
@@ -100,13 +101,28 @@ class GesticulatorModel(pl.LightningModule, PredictionSavingMixin):
             else:
                 print("ERROR: Missing data in the dataset!")
             exit(-1)
-    
+
+        # Detect GeMAPS features
+        if self.train_dataset.audio_dim == 88:
+            self.normalize_gemaps_features()
+            
+    def normalize_gemaps_features(self):
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        print("[NOTE] Normalizing GeMAPS features.")
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%")
+
+        self.train_dataset.audio, self.audio_feature_normalizer = fit_and_standardize(self.train_dataset.audio)
+        joblib.dump(self.audio_feature_normalizer, os.path.join(self.hparams.utils_dir, "gemaps_scaler.gz"))
+        self.val_dataset.audio = standardize(self.val_dataset.audio, self.audio_feature_normalizer)  
+        # Add fake batch dimension so that standardization works
+        self.val_sequence.audio = standardize(self.val_sequence.audio[np.newaxis, :], self.audio_feature_normalizer)[0] 
+            
     def create_result_folder(self):
         """Create the <results>/<run_name> folder."""
         run_name = self.hparams.run_name
         self.save_dir = path.join(self.hparams.result_dir, run_name)
         # Clear the save directory for this run if it exists
-        if path.isdir(self.save_dir):
+        if path.isdir(self.save_dir) and self.hparams.model_checkpoint is None:
             if run_name == 'last_run' or self.hparams.no_overwrite_warning:
                 rmtree(self.save_dir)
             else:
