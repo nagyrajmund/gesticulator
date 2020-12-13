@@ -33,15 +33,28 @@ class ModelSavingCallback(Callback):
             print("\n\n  Saved checkpoint to", os.path.join(checkpoint_dir, checkpoint_fname), end="\n")
 
 def main(hparams):
-    model = GesticulatorModel(hparams)
+    if hparams.model_checkpoint is None:
+        model = GesticulatorModel(hparams)
+    else:
+        model = GesticulatorModel.load_from_checkpoint(hparams.model_checkpoint, 
+            model_checkpoint=hparams.model_checkpoint)
+
     logger = create_logger(model.save_dir)
     callbacks = [ModelSavingCallback()] if hparams.save_model_every_n_epochs > 0 else []
     
-    trainer = Trainer.from_argparse_args(hparams, logger=logger, callbacks = callbacks,
-        checkpoint_callback=False)
-
+    if hparams.model_checkpoint is None:
+        trainer = Trainer.from_argparse_args(hparams, logger=logger, callbacks = callbacks,
+            checkpoint_callback=False)
+    else:
+        # Workaround
+        model.init_prediction_saving_params()
+        model.on_train_start()
+        
+        trainer = Trainer.from_argparse_args(hparams, resume_from_checkpoint=hparams.model_checkpoint, 
+            logger=logger, callbacks=callbacks, checkpoint_callback=False, num_sanity_val_steps=0)
+    
     trainer.fit(model)
-    trainer.save_checkpoint(os.path.join(model.save_dir, "trained_model.ckpt"))
+    trainer.save_checkpoint(os.path.join(model.save_dir, f"trained_model_{model.current_epoch+1}epochs.ckpt"))
 
    
 def create_logger(model_save_dir):
@@ -58,6 +71,7 @@ def add_training_script_arguments(parser):
                         help="The frequency of model checkpoint saving.")
     parser.add_argument('--use_mirror_augment', '-mirror', action='store_true',
                         help="If set, use auxiliary mirrored motion dataset")
+    parser.add_argument('--model_checkpoint', default=None)
     return parser
 
 if __name__ == '__main__':
