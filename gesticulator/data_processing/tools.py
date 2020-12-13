@@ -25,11 +25,16 @@ WINDOW_LENGTH = 0.1 #s
 SUBSAMPL_RATE = 9
 
 def extract_gemaps_features(audio_filename):
-    feature_extractor = opensmile.Smile(
-        feature_set = opensmile.FeatureSet.eGeMAPSv01b)
-
     audio, sampling_rate = soundfile.read(audio_filename)
     
+    # Convert 2 channel input to 1 channel
+    if len(audio.shape) == 2:
+        audio = (audio[:, 0] + audio[:, 1]) / 2
+    
+    feature_extractor = opensmile.Smile(
+        feature_set = opensmile.FeatureSet.eGeMAPSv01b
+    )
+
     # Ideally we would want to use 50 ms windows, but they are too short for opensmile
     # Therefore we use 100 ms windows instead, then upsample the feature vector to the same length
     step = int(0.1 * sampling_rate)
