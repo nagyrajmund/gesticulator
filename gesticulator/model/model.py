@@ -112,7 +112,7 @@ class GesticulatorModel(pl.LightningModule, PredictionSavingMixin):
         print("%%%%%%%%%%%%%%%%%%%%%%%%%%")
 
         self.train_dataset.audio, self.audio_feature_normalizer = fit_and_standardize(self.train_dataset.audio)
-        joblib.dump(self.audio_feature_normalizer, os.path.join(self.hparams.utils_dir, "gemaps_scaler.gz"))
+        dump(self.audio_feature_normalizer, os.path.join(self.hparams.utils_dir, "gemaps_scaler.gz"))
         self.val_dataset.audio = standardize(self.val_dataset.audio, self.audio_feature_normalizer)  
         # Add fake batch dimension so that standardization works
         self.val_sequence.audio = standardize(self.val_sequence.audio[np.newaxis, :], self.audio_feature_normalizer)[0] 

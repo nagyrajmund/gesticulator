@@ -4,6 +4,7 @@ import subprocess
 
 import torch
 import librosa
+import joblib 
 
 from gesticulator.model.model import GesticulatorModel
 from gesticulator.interface.gesture_predictor import GesturePredictor
@@ -12,10 +13,17 @@ from gesticulator.visualization.motion_visualizer.generate_videos import visuali
 def main(args):
     # 0. Check feature type based on the model
     feature_type, audio_dim = check_feature_type(args.model_file)
-
     # 1. Load the model
     model = GesticulatorModel.load_from_checkpoint(
         args.model_file, inference_mode=True)
+    
+    if feature_type == "GeMAPS":
+        model.audio_normalizer = joblib.load(
+            os.path.join(
+                "../gesticulator/", model.hparams.utils_dir, "gemaps_scaler.gz"
+            )
+        )
+    
     # This interface is a wrapper around the model for predicting new gestures conveniently
     gp = GesturePredictor(model, feature_type)
 
@@ -71,7 +79,7 @@ def check_feature_type(model_file):
     elif audio_dim == 30:
         feature_type = "MFCC+Pros"
     elif audio_dim == 88:
-        feature_type = "GeMAPs"
+        feature_type = "GeMAPS"
     else:
         print("Error: Unknown audio feature type of dimension", audio_dim)
         exit(-1)

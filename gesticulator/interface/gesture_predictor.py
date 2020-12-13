@@ -12,6 +12,7 @@ from torchnlp.word_to_vector.fast_text import FastText
 
 from gesticulator.data_processing.text_features.parse_json_transcript import encode_json_transcript_with_bert, encode_json_transcript_with_fasttext
 from gesticulator.data_processing import tools
+from gesticulator.data_processing.SGdataset import standardize
 from gesticulator.model.model import GesticulatorModel
 from motion_visualizer.convert2bvh import write_bvh
 from motion_visualizer.bvh2npy import convert_bvh2npy
@@ -30,7 +31,7 @@ class GesturePredictor:
         # The plaintext transcription itself, as a string. Only for demo purposes.
         TEXT = auto()
         
-    supported_features = ("MFCC", "Pros", "MFCC+Pros", "Spectro", "Spectro+Pros")
+    supported_features = ("MFCC", "Pros", "MFCC+Pros", "Spectro", "Spectro+Pros", "GeMAPS")
     
     def __init__(self, model : GesticulatorModel, feature_type : str):
         """An interface for generating gestures using saved GesticulatorModel.
@@ -63,8 +64,13 @@ class GesturePredictor:
         text_type = self._get_text_input_type(text)
         audio, text = self._extract_features(audio_path, text, text_type)
         audio, text = self._add_feature_padding(audio, text)
+
         # Add batch dimension
         audio, text = audio.unsqueeze(0), text.unsqueeze(0)
+
+        if self.feature_type == "GeMAPS":
+            audio = standardize(audio, self.model.audio_normalizer)
+            audio = self._tensor_from_numpy(audio)
 
         predicted_motion = self.model.forward(audio, text, use_conditioning=True, motion=None)
  
@@ -117,6 +123,11 @@ class GesturePredictor:
             audio_fill_value = 0
         elif self.feature_type == "Spectro":
             audio_fill_value = -12
+        elif self.feature_type == "GeMAPS":
+            print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+            print("WARNING: GeMAPS temporarily uses 0 as padding value, which might be incorrect.")
+            print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+            audio_fill_value = 0
         else:
             print("ERROR: only prosody and spectrogram are supported at the moment.")
             print("Current feature:", self.feature_type)
@@ -188,6 +199,9 @@ class GesturePredictor:
             pros_vectors = tools.extract_prosodic_features(audio_path)
             spectr_vectors, pros_vectors = tools.shorten(spectr_vectors, pros_vectors)
             return np.concatenate((spectr_vectors, pros_vectors), axis=1)
+
+        if self.feature_type == "GeMAPS":
+            return tools.extract_gemaps_features(audio_path)
 
         # Unknown feature type
         print(f"ERROR: unknown feature type '{self.feature_type}' in the 'extract_audio_features' call!")
